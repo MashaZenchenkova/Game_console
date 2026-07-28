@@ -21,12 +21,12 @@ bool flag = false;
 Detalca new_detalca;
 Detalca add_detalca() 
 {
-  int a = random(1, 9); 
+  int a = random(1, 3); 
   Detalca new_detalca; 
   byte palca_matrix[8][8] = 
   {
     {1, 1, 1, 1, 1, 1, 1, 1}, 
-    {1, 1, 1, 1, 1, 1, 1, 1},
+    {0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0}, 
     {0, 0, 0, 0, 0, 0, 0, 0}, 
     {0, 0, 0, 0, 0, 0, 0, 0}, 
@@ -55,17 +55,6 @@ Detalca add_detalca()
     {0, 0, 0, 0, 1, 1, 1, 1},
     {0, 0, 0, 0, 1, 1, 1, 1}, 
     {0, 0, 0, 0, 1, 1, 1, 1}
-  };
-  byte rx_matrix[8][8] = 
-  {
-    {0, 0, 0, 0, 1, 1, 1, 1}, 
-    {0, 0, 0, 0, 1, 1, 1, 1},  
-    {0, 0, 0, 0, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1}, 
-    {1, 1, 1, 1, 0, 0, 0, 0},
-    {1, 1, 1, 1, 0, 0, 0, 0},
-    {1, 1, 1, 1, 0, 0, 0, 0}, 
-    {1, 1, 1, 1, 0, 0, 0, 0},
   };
   byte z_matrix[8][8] = 
   {
@@ -152,23 +141,12 @@ Detalca add_detalca()
       {
         for(int j = 0; j < 8; j++)
         {
-          new_detalca.size[i][j] = rx_matrix[i][j];
+          new_detalca.size[i][j] = z_matrix[i][j];
         }
       } 
       break;
     }
-    case 5: 
-    {
-      for(int i = 0; i < 8; i++) 
-      {
-        for(int j = 0; j < 8; j++) 
-        {
-          new_detalca.size[i][j] = z_matrix[i][j];
-        }
-      } 
-      break; 
-    }
-    case 6:
+    case 5:
     { 
       for(int i = 0; i < 8; i++) 
       {
@@ -179,7 +157,7 @@ Detalca add_detalca()
       } 
       break;
     }
-    case 7: 
+    case 6: 
     {
       for(int i = 0; i < 8; i++) 
       {
@@ -190,7 +168,7 @@ Detalca add_detalca()
       } 
       break;
     }
-    case 8: 
+    case 7: 
     {
       for(int i = 0; i < 8; i++) 
       {
