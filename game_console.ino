@@ -21,7 +21,7 @@ bool flag = false;
 Detalca new_detalca;
 Detalca add_detalca() 
 {
-  int a = random(1, 3); 
+  int a = random(1, 8); 
   Detalca new_detalca; 
   byte palca_matrix[8][8] = 
   {
