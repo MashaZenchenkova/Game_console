@@ -14,14 +14,15 @@ struct Detalca
   byte size[8][8];
 };
 byte game[64][128] = {0};
+byte povorot[8][8];  
+bool can_turn = true; 
 int start_x = 1;    
 int start_y = 32;   
 bool need_new = true;
-bool flag = false;
 Detalca new_detalca;
 Detalca add_detalca() 
 {
-  int a = random(1, 8); 
+  int a = random(1, 8);
   Detalca new_detalca; 
   byte palca_matrix[8][8] = 
   {
@@ -305,6 +306,70 @@ bool win()
   }
   return zbc;
 }
+void turn_left() 
+{
+  for (int i = 0; i < 8; i++) 
+  {
+    for (int j = 0; j < 8; j++) 
+    {
+      povorot[i][j] = new_detalca.size[7 - j][i];
+    }
+  }
+  for (int i = 0; i < 8; i++) 
+  {
+    for (int j = 0; j < 8; j++) 
+    {
+      if (povorot[i][j] == 1) 
+      {
+        int check_x = start_x + j;
+        int check_y = start_y + i;
+        if (check_x < 0 || check_x >= 128 || check_y < 0 || check_y >= 64 || game[check_y][check_x] == 1) 
+        {
+          return;
+        }
+      }
+    }
+  }
+  for (int i = 0; i < 8; i++) 
+  {
+    for (int j = 0; j < 8; j++) 
+    {
+      new_detalca.size[i][j] = povorot[i][j];
+    }
+  }
+}
+void turn_right() 
+{
+  for (int i = 0; i < 8; i++) 
+  {
+    for (int j = 0; j < 8; j++) 
+    {
+      povorot[i][j] = new_detalca.size[j][7 - i];
+    }
+  }
+  for (int i = 0; i < 8; i++) 
+  {
+    for (int j = 0; j < 8; j++) 
+    {
+      if (povorot[i][j] == 1) 
+      {
+        int check_x = start_x + j;
+        int check_y = start_y + i;
+        if (check_x < 0 || check_x >= 128 || check_y < 0 || check_y >= 64 || game[check_y][check_x] == 1) 
+        {
+          return;
+        }
+      }
+    }
+  }
+  for (int i = 0; i < 8; i++) 
+  {
+    for (int j = 0; j < 8; j++) 
+    {
+      new_detalca.size[i][j] = povorot[i][j];
+    }
+  }
+}
 void setup() 
 {
   Serial.begin(115200);
@@ -334,9 +399,11 @@ void loop()
   {
     new_detalca = add_detalca();
     start_x = 1;
-    start_y = 28;
+    start_y = 32;
     need_new = false;
-    if (!go_d()) {
+    can_turn = true;
+    if (!go_d()) 
+    {
       for (int i = 1; i < 63; i++) 
       {
         for (int j = 1; j < 127; j++) 
@@ -348,7 +415,7 @@ void loop()
     }
   }
   display.clearDisplay();
-  gran();  
+  gran();
   if (analogRead(JOY_Y) < 1000) 
   {
     if (go_left()) 
@@ -362,6 +429,22 @@ void loop()
     {
       start_y++;
     }
+  }
+  if (analogRead(JOY_X) < 1000 && can_turn)
+  {
+    turn_left();
+    can_turn = false;
+    delay(100);
+  }
+  if (analogRead(JOY_X) > 4000 && can_turn)
+  {
+    turn_right();
+    can_turn = false;
+    delay(100);
+  }
+  if ((analogRead(JOY_X) > 1500 && analogRead(JOY_X) < 3500) && (analogRead(JOY_Y) > 1500 && analogRead(JOY_Y) < 3500))
+  {
+    can_turn = true;
   }
   if (go_d()) 
   {
