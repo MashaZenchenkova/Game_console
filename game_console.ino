@@ -8,7 +8,6 @@
 #define OLED_RESET -1
 #define JOY_Y 35 
 #define JOY_X 34
-#define butt  33
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 const unsigned char myBitmap[] PROGMEM = 
 {
@@ -85,7 +84,9 @@ byte game[64][128] = {0};
 byte povorot[8][8];  
 bool can_turn = true; 
 int start_x = 1;    
-int start_y = 32;   
+int start_y = 32;
+int start_x_z = 64;
+int start_y_z = 32;   
 bool need_new = true;
 int t = 2;
 Detalca new_detalca;
@@ -538,14 +539,106 @@ void start()
     delay(50); 
   }
 }
+void otr_zmeika()
+{
+  for (int i = 0; i < 64; i++) 
+  {
+    for (int j = 0; j < 128; j++) 
+    {
+      game[i][j] = 0;
+    }
+  }
+  for (int i = 0; i < 64; i++) 
+  {
+    for (int j = 0; j < 128; j++) 
+    {
+      if (i == 0 || j == 0 || i == 63 || j == 127) 
+      {
+        game[i][j] = 1;
+      }
+    }
+  }
+  game[start_y_z][start_x_z] = 1;
+  display.clearDisplay();
+  for (int i = 0; i < 64; i++) 
+  {
+    for (int j = 0; j < 128; j++) 
+    {
+      if (game[i][j] == 1) 
+      {
+        display.fillRect(j, i, 1, 1, SSD1306_WHITE);
+      }
+    }
+  }
+  display.display();
+}
+bool go_down_z() 
+{
+ if (game[start_y_z][start_x_z - 1] == 1) 
+  {
+    return false; 
+  }     
+  return true; 
+}
+bool go_hight_z() 
+{
+  if (game[start_y_z][start_x_z + 1] == 1) 
+  {
+    return false;
+  }
+  return true; 
+}
+bool go_right_z()
+{
+  if (game[start_y_z + 1][start_x_z] == 1) 
+  {
+    return false; 
+  }
+  return true; 
+}
+bool go_left_z()
+{
+  if (game[start_y_z - 1][start_x_z] == 1) 
+  {
+    return false; 
+  }
+  return true; 
+}
 void zmeika() 
 {
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setCursor(20, 15);
-  display.print("ZMEIKA");
-  display.display();
-  delay(100);
+  dvigenie();
+}
+void dvigenie()
+{
+  if (analogRead(JOY_Y) < 1000) 
+  {
+    if (go_left_z()) 
+    {
+      start_y_z--;
+    }
+  } 
+  else if (analogRead(JOY_Y) > 4000) 
+  {
+    if (go_right_z()) 
+    {
+      start_y_z++;
+    }
+  } 
+  else if (analogRead(JOY_X) > 4000) 
+  {
+    if (go_hight_z()) 
+    {
+      start_x_z++; 
+    }
+  } 
+  else if (analogRead(JOY_X) < 1000) 
+  {
+    if (go_down_z()) 
+    {
+      start_x_z--; 
+    }
+  }
+  otr_zmeika();
 }
 void setup() 
 {
@@ -563,7 +656,8 @@ void setup()
   {
     for (int j = 0; j < 128; j++) 
     {
-      if (i == 0 || j == 0 || i == 63 || j == 127) {
+      if (i == 0 || j == 0 || i == 63 || j == 127) 
+      {
         game[i][j] = 1;
       }
     }
@@ -580,13 +674,3 @@ void loop()
     zmeika();
   }
 }
-
-
-
-
-
-
-
-
-
-
