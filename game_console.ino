@@ -83,10 +83,13 @@ struct Detalca
 byte game[64][128] = {0};
 byte povorot[8][8];  
 bool can_turn = true; 
+int h_x;
+int h_y;
 int start_x = 1;    
 int start_y = 32;
 int start_x_z = 64;
-int start_y_z = 32;   
+int start_y_z = 32; 
+bool zrat = true;  
 bool need_new = true;
 int t = 2;
 Detalca new_detalca;
@@ -541,6 +544,7 @@ void start()
 }
 void otr_zmeika()
 {
+  bool food_was = !zrat; 
   for (int i = 0; i < 64; i++) 
   {
     for (int j = 0; j < 128; j++) 
@@ -559,6 +563,10 @@ void otr_zmeika()
     }
   }
   game[start_y_z][start_x_z] = 1;
+  if (food_was) 
+  {
+    game[h_y][h_x] = 2;
+  }
   display.clearDisplay();
   for (int i = 0; i < 64; i++) 
   {
@@ -568,16 +576,24 @@ void otr_zmeika()
       {
         display.fillRect(j, i, 1, 1, SSD1306_WHITE);
       }
+      else if (game[i][j] == 2) 
+      {
+        display.fillRect(j, i, 1, 1, SSD1306_WHITE);
+      }
     }
   }
   display.display();
 }
 bool go_down_z() 
 {
- if (game[start_y_z][start_x_z - 1] == 1) 
+  if (game[start_y_z][start_x_z - 1] == 1) 
   {
     return false; 
-  }     
+  } 
+  if (game[start_y_z][start_x_z - 1] == 2)    
+  {
+    zrat = true;
+  }
   return true; 
 }
 bool go_hight_z() 
@@ -586,59 +602,126 @@ bool go_hight_z()
   {
     return false;
   }
+  if (game[start_y_z][start_x_z + 1] == 2)    
+  {
+    zrat = true;
+  }
   return true; 
 }
 bool go_right_z()
 {
-  if (game[start_y_z + 1][start_x_z] == 1) 
+  if (game[start_y_z + 1][start_x_z] == 1)
   {
     return false; 
+  }
+  if (game[start_y_z + 1][start_x_z] == 2)    
+  {
+    zrat = true;
   }
   return true; 
 }
 bool go_left_z()
 {
-  if (game[start_y_z - 1][start_x_z] == 1) 
+  if (game[start_y_z - 1][start_x_z] == 1)  
   {
     return false; 
   }
+  if (game[start_y_z - 1][start_x_z] == 2)    
+  {
+    zrat = true;
+  }
   return true; 
+}
+int turn = 1;
+void dvigenie()
+{
+  while (true)
+  {
+    if (analogRead(JOY_Y) < 1000) 
+    {
+      turn = 1;
+    }
+    else if (analogRead(JOY_Y) > 4000) 
+    {
+      turn = 2;
+    }
+    else if (analogRead(JOY_X) > 4000) 
+    {
+      turn = 3;
+    }
+    else if (analogRead(JOY_X) < 1000) 
+    {
+      turn = 4;
+    }
+    switch(turn)
+    {
+      case 1:
+      {
+        if (!go_left_z()) 
+        { 
+          start(); 
+          start_x_z = 64;
+          start_y_z = 32; 
+          return; 
+        }
+        start_y_z--;
+        break;
+      }
+      case 2:
+      {
+        if (!go_right_z()) 
+        { 
+          start(); 
+          start_x_z = 64;
+          start_y_z = 32; 
+          return; 
+        }
+        start_y_z++;
+        break;
+      }  
+      case 3:
+      {
+        if (!go_hight_z()) 
+        { 
+          start(); 
+          start_x_z = 64;
+          start_y_z = 32; 
+          return; 
+        }
+        start_x_z++;
+        break;
+      }
+      case 4: 
+      {
+        if (!go_down_z()) 
+        { 
+          start(); 
+          start_x_z = 64;
+          start_y_z = 32; 
+          return; 
+        }
+        start_x_z--;
+        break;
+      }
+    }
+    spawn_havka();
+    otr_zmeika();
+    delay(100);
+  }
+}
+void spawn_havka()
+{
+  if (zrat)
+  {
+    h_x = random(2, 126);  
+    h_y = random(2, 62);  
+    game[h_y][h_x] = 2;   
+    zrat = false;         
+  }
 }
 void zmeika() 
 {
   dvigenie();
-}
-void dvigenie()
-{
-  if (analogRead(JOY_Y) < 1000) 
-  {
-    if (go_left_z()) 
-    {
-      start_y_z--;
-    }
-  } 
-  else if (analogRead(JOY_Y) > 4000) 
-  {
-    if (go_right_z()) 
-    {
-      start_y_z++;
-    }
-  } 
-  else if (analogRead(JOY_X) > 4000) 
-  {
-    if (go_hight_z()) 
-    {
-      start_x_z++; 
-    }
-  } 
-  else if (analogRead(JOY_X) < 1000) 
-  {
-    if (go_down_z()) 
-    {
-      start_x_z--; 
-    }
-  }
-  otr_zmeika();
 }
 void setup() 
 {
