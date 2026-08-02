@@ -8,6 +8,7 @@
 #define OLED_RESET -1
 #define JOY_Y 35 
 #define JOY_X 34
+#define BUZZER_PIN 12  
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 const unsigned char myBitmap[] PROGMEM = 
 {
@@ -81,7 +82,11 @@ struct Detalca
   byte size[8][8];
 };
 byte game[64][128] = {0};
-byte povorot[8][8];  
+byte povorot[8][8]; 
+int traektoria[64][128] = {0}; 
+int step_counter = 0;    
+int turn = 1;     
+int tail_length = 1;                
 bool can_turn = true; 
 int h_x;
 int h_y;
@@ -461,6 +466,7 @@ void tetris()
           game[i][j] = 0;
         }
       }
+      play_game_over_melody();
       t = 2;
       start();
     }
@@ -544,29 +550,25 @@ void start()
 }
 void otr_zmeika()
 {
-  bool food_was = !zrat; 
-  for (int i = 0; i < 64; i++) 
-  {
-    for (int j = 0; j < 128; j++) 
-    {
-      game[i][j] = 0;
-    }
-  }
   for (int i = 0; i < 64; i++) 
   {
     for (int j = 0; j < 128; j++) 
     {
       if (i == 0 || j == 0 || i == 63 || j == 127) 
       {
-        game[i][j] = 1;
+        game[i][j] = 1; 
+      }
+      else if (traektoria[i][j] > 0 && (step_counter - traektoria[i][j]) < tail_length) 
+      {
+        game[i][j] = 3;
+      }
+      else 
+      {
+        game[i][j] = 0;
       }
     }
   }
-  game[start_y_z][start_x_z] = 1;
-  if (food_was) 
-  {
-    game[h_y][h_x] = 2;
-  }
+  game[h_y][h_x] = 2; 
   display.clearDisplay();
   for (int i = 0; i < 64; i++) 
   {
@@ -577,6 +579,10 @@ void otr_zmeika()
         display.fillRect(j, i, 1, 1, SSD1306_WHITE);
       }
       else if (game[i][j] == 2) 
+      {
+        display.fillRect(j, i, 1, 1, SSD1306_WHITE);
+      }
+      else if (game[i][j] == 3) 
       {
         display.fillRect(j, i, 1, 1, SSD1306_WHITE);
       }
@@ -593,6 +599,7 @@ bool go_down_z()
   if (game[start_y_z][start_x_z - 1] == 2)    
   {
     zrat = true;
+    tail_length++;
   }
   return true; 
 }
@@ -605,6 +612,7 @@ bool go_hight_z()
   if (game[start_y_z][start_x_z + 1] == 2)    
   {
     zrat = true;
+    tail_length++;
   }
   return true; 
 }
@@ -617,6 +625,7 @@ bool go_right_z()
   if (game[start_y_z + 1][start_x_z] == 2)    
   {
     zrat = true;
+    tail_length++;
   }
   return true; 
 }
@@ -629,23 +638,67 @@ bool go_left_z()
   if (game[start_y_z - 1][start_x_z] == 2)    
   {
     zrat = true;
+    tail_length++;
   }
   return true; 
 }
-int turn = 1;
+void play_game_over_melody()
+{
+  tone(BUZZER_PIN, 392, 200);  
+  delay(250);
+  tone(BUZZER_PIN, 370, 200);  
+  delay(250);
+  tone(BUZZER_PIN, 349, 200);  
+  delay(250);
+  tone(BUZZER_PIN, 311, 600);  
+  delay(700);
+  noTone(BUZZER_PIN);
+}
+void sliv()
+{
+  for(int i = 0; i < 64; i++) 
+  {
+    for(int j = 0; j < 128; j++) 
+    {
+      if (i == 0 || j == 0 || i == 63 || j == 127) 
+      {
+        game[i][j] = 1; 
+      }
+      else
+      {
+        game[i][j] = 0;
+      }
+    }
+  }
+  play_game_over_melody();
+  start(); 
+  start_x_z = 64; 
+  start_y_z = 32;
+}
 void dvigenie()
 {
+  for(int i = 0; i < 64; i++) 
+  {
+    for(int j = 0; j < 128; j++) 
+    {
+      traektoria[i][j] = 0;
+    }
+  }
+  step_counter = 0;
+  tail_length = 1;
+  zrat = true;
+  spawn_havka();
   while (true)
   {
     if (analogRead(JOY_Y) < 1000) 
     {
       turn = 1;
-    }
+    } 
     else if (analogRead(JOY_Y) > 4000) 
     {
       turn = 2;
     }
-    else if (analogRead(JOY_X) > 4000) 
+    else if (analogRead(JOY_X) > 4000)
     {
       turn = 3;
     }
@@ -659,10 +712,8 @@ void dvigenie()
       {
         if (!go_left_z()) 
         { 
-          start(); 
-          start_x_z = 64;
-          start_y_z = 32; 
-          return; 
+          sliv(); 
+          return;
         }
         start_y_z--;
         break;
@@ -671,10 +722,8 @@ void dvigenie()
       {
         if (!go_right_z()) 
         { 
-          start(); 
-          start_x_z = 64;
-          start_y_z = 32; 
-          return; 
+          sliv();
+          return;  
         }
         start_y_z++;
         break;
@@ -683,9 +732,7 @@ void dvigenie()
       {
         if (!go_hight_z()) 
         { 
-          start(); 
-          start_x_z = 64;
-          start_y_z = 32; 
+          sliv(); 
           return; 
         }
         start_x_z++;
@@ -695,15 +742,15 @@ void dvigenie()
       {
         if (!go_down_z()) 
         { 
-          start(); 
-          start_x_z = 64;
-          start_y_z = 32; 
-          return; 
+          sliv(); 
+          return;
         }
         start_x_z--;
         break;
       }
     }
+    step_counter++;
+    traektoria[start_y_z][start_x_z] = step_counter;
     spawn_havka();
     otr_zmeika();
     delay(100);
@@ -719,9 +766,30 @@ void spawn_havka()
     zrat = false;         
   }
 }
+void play_victory_melody()
+{
+  tone(BUZZER_PIN, 523, 150);   
+  delay(170);
+  tone(BUZZER_PIN, 659, 150);  
+  delay(170);
+  tone(BUZZER_PIN, 784, 150);   
+  delay(170);
+  tone(BUZZER_PIN, 1047, 150); 
+  delay(170);
+  tone(BUZZER_PIN, 784, 150);  
+  delay(170);
+  tone(BUZZER_PIN, 1047, 500); 
+  delay(550);
+  noTone(BUZZER_PIN);
+}
 void zmeika() 
 {
   dvigenie();
+  if (tail_length == 7938)
+  {
+    play_victory_melody();
+    start();
+  }
 }
 void setup() 
 {
